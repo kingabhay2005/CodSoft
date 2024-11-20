@@ -1,0 +1,94 @@
+import tkinter as tk
+from tkinter import ttk
+import random
+
+class GameLogic:
+    def __init__(self):
+        self.choices = ["Rock", "Paper", "Scissors"]
+        self.user_score = 0
+        self.computer_score = 0
+        self.rounds_played = 0
+
+    def get_computer_choice(self):
+        return random.choice(self.choices)
+
+    def determine_winner(self, user_choice, computer_choice):
+        if user_choice == computer_choice:
+            return "Tie"
+        if (user_choice == "Rock" and computer_choice == "Scissors") or \
+           (user_choice == "Paper" and computer_choice == "Rock") or \
+           (user_choice == "Scissors" and computer_choice == "Paper"):
+            self.user_score += 1
+            return "User"
+        self.computer_score += 1
+        return "Computer"
+
+    def reset_scores(self):
+        self.user_score = 0
+        self.computer_score = 0
+        self.rounds_played = 0
+
+class GameGUI:
+    def __init__(self, root):
+        self.logic = GameLogic()
+        self.root = root
+        self.root.title("Rock-Paper-Scissors")
+        self.create_widgets()
+
+    def create_widgets(self):
+        self.header = tk.Label(self.root, text="Rock-Paper-Scissors Game", font=("Arial", 20))
+        self.header.pack(pady=10)
+        self.options_frame = tk.Frame(self.root)
+        self.options_frame.pack(pady=10)
+        self.rock_button = ttk.Button(self.options_frame, text="Rock", command=lambda: self.play_round("Rock"))
+        self.rock_button.grid(row=0, column=0, padx=10)
+        self.paper_button = ttk.Button(self.options_frame, text="Paper", command=lambda: self.play_round("Paper"))
+        self.paper_button.grid(row=0, column=1, padx=10)
+        self.scissors_button = ttk.Button(self.options_frame, text="Scissors", command=lambda: self.play_round("Scissors"))
+        self.scissors_button.grid(row=0, column=2, padx=10)
+        self.result_label = tk.Label(self.root, text="", font=("Arial", 14))
+        self.result_label.pack(pady=10)
+        self.score_frame = tk.Frame(self.root)
+        self.score_frame.pack(pady=10)
+        self.user_score_label = tk.Label(self.score_frame, text="User Score: 0", font=("Arial", 12))
+        self.user_score_label.grid(row=0, column=0, padx=20)
+        self.computer_score_label = tk.Label(self.score_frame, text="Computer Score: 0", font=("Arial", 12))
+        self.computer_score_label.grid(row=0, column=1, padx=20)
+        self.replay_frame = tk.Frame(self.root)
+        self.replay_frame.pack(pady=10)
+        self.replay_button = ttk.Button(self.replay_frame, text="Play Again", command=self.reset_game, state=tk.DISABLED)
+        self.replay_button.grid(row=0, column=0, padx=10)
+        self.exit_button = ttk.Button(self.replay_frame, text="Exit", command=self.root.quit)
+        self.exit_button.grid(row=0, column=1, padx=10)
+
+    def play_round(self, user_choice):
+        computer_choice = self.logic.get_computer_choice()
+        winner = self.logic.determine_winner(user_choice, computer_choice)
+        self.result_label.config(text=f"You chose {user_choice}. Computer chose {computer_choice}. Winner: {winner}")
+        self.update_scores()
+        self.replay_button.config(state=tk.NORMAL)
+
+    def update_scores(self):
+        self.user_score_label.config(text=f"User Score: {self.logic.user_score}")
+        self.computer_score_label.config(text=f"Computer Score: {self.logic.computer_score}")
+
+    def reset_game(self):
+        self.logic.reset_scores()
+        self.result_label.config(text="")
+        self.update_scores()
+        self.replay_button.config(state=tk.DISABLED)
+
+class GameApp:
+    def __init__(self):
+        self.root = tk.Tk()
+        self.gui = GameGUI(self.root)
+
+    def run(self):
+        self.root.mainloop()
+
+def main():
+    app = GameApp()
+    app.run()
+
+if __name__ == "__main__":
+    main()
