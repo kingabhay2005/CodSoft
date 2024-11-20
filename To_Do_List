@@ -1,0 +1,197 @@
+import tkinter as tk
+from tkinter import messagebox
+import json
+from datetime import datetime
+
+# Task class to represent each task
+class Task:
+    def __init__(self, name, category, due_date, priority, status="Pending"):
+        self.name = name
+        self.category = category
+        self.due_date = due_date
+        self.priority = priority
+        self.status = status
+
+    def mark_complete(self):
+        self.status = "Completed"
+
+    def __str__(self):
+        return f"{self.name} | {self.category} | Due: {self.due_date} | Priority: {self.priority} | {self.status}"
+
+# Main application class
+class TodoApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("To-Do List Application")
+
+        # Custom Colors
+        self.bg_color = "#2E4053"        # Dark Slate Gray Background
+        self.label_color = "#EAEDED"     # Light text for labels
+        self.entry_bg = "#D5DBDB"        # Light gray background for entry
+        self.button_bg = "#1ABC9C"       # Teal button background
+        self.button_fg = "#FFFFFF"       # White text for buttons
+        self.listbox_bg = "#34495E"      # Darker background for listbox
+        self.listbox_fg = "#FFFFFF"      # White text for listbox items
+        self.selected_bg = "#85C1E9"     # Light blue selected item
+        self.selected_fg = "#1B4F72"     # Dark blue for selected item text
+
+        # Task List
+        self.tasks = []
+
+        # Load tasks from file
+        self.load_tasks()
+
+        # Creating the UI Components
+        self.create_widgets()
+
+    def create_widgets(self):
+        # Set the background color for the root window
+        self.root.configure(bg=self.bg_color)
+
+        # Task Entry
+        tk.Label(self.root, text="Task:", bg=self.bg_color, fg=self.label_color).grid(row=0, column=0, padx=10, pady=10)
+        self.task_entry = tk.Entry(self.root, width=40, bg=self.entry_bg)
+        self.task_entry.grid(row=0, column=1, padx=10, pady=10)
+
+        # Category Entry
+        tk.Label(self.root, text="Category:", bg=self.bg_color, fg=self.label_color).grid(row=1, column=0, padx=10, pady=10)
+        self.category_entry = tk.Entry(self.root, width=40, bg=self.entry_bg)
+        self.category_entry.grid(row=1, column=1, padx=10, pady=10)
+
+        # Due Date Entry
+        tk.Label(self.root, text="Due Date (YYYY-MM-DD):", bg=self.bg_color, fg=self.label_color).grid(row=2, column=0, padx=10, pady=10)
+        self.due_date_entry = tk.Entry(self.root, width=40, bg=self.entry_bg)
+        self.due_date_entry.grid(row=2, column=1, padx=10, pady=10)
+
+        # Priority Entry (High, Medium, Low)
+        tk.Label(self.root, text="Priority:", bg=self.bg_color, fg=self.label_color).grid(row=3, column=0, padx=10, pady=10)
+        self.priority_entry = tk.Entry(self.root, width=40, bg=self.entry_bg)
+        self.priority_entry.grid(row=3, column=1, padx=10, pady=10)
+
+        # Add Task Button
+        self.add_task_button = tk.Button(self.root, text="Add Task", bg=self.button_bg, fg=self.button_fg, command=self.add_task)
+        self.add_task_button.grid(row=4, column=1, padx=10, pady=10)
+
+        # Task List Display
+        self.task_listbox = tk.Listbox(self.root, height=15, width=75, bg=self.listbox_bg, fg=self.listbox_fg,
+                                       selectbackground=self.selected_bg, selectforeground=self.selected_fg)
+        self.task_listbox.grid(row=5, column=0, columnspan=2, padx=10, pady=10)
+
+        # Scrollbar
+        scrollbar = tk.Scrollbar(self.root, orient="vertical", command=self.task_listbox.yview)
+        scrollbar.grid(row=5, column=2, sticky="ns")
+        self.task_listbox.config(yscrollcommand=scrollbar.set)
+
+        # Mark Complete Button
+        self.complete_button = tk.Button(self.root, text="Mark Complete", bg=self.button_bg, fg=self.button_fg, command=self.mark_complete)
+        self.complete_button.grid(row=6, column=0, padx=10, pady=10)
+
+        # Remove Task Button
+        self.remove_button = tk.Button(self.root, text="Remove Task", bg=self.button_bg, fg=self.button_fg, command=self.remove_task)
+        self.remove_button.grid(row=6, column=1, padx=10, pady=10)
+
+        # Save Button
+        self.save_button = tk.Button(self.root, text="Save Tasks", bg=self.button_bg, fg=self.button_fg, command=self.save_tasks)
+        self.save_button.grid(row=7, column=0, padx=10, pady=10)
+
+        # Filter by Category Button
+        self.filter_button = tk.Button(self.root, text="Filter by Category", bg=self.button_bg, fg=self.button_fg, command=self.filter_by_category)
+        self.filter_button.grid(row=7, column=1, padx=10, pady=10)
+
+        # Load initial tasks into the listbox
+        self.update_task_listbox()
+
+    def add_task(self):
+        task_name = self.task_entry.get()
+        category = self.category_entry.get()
+        due_date = self.due_date_entry.get()
+        priority = self.priority_entry.get()
+
+        # Validate input
+        if task_name and category and due_date and priority:
+            try:
+                # Validate due date format
+                datetime.strptime(due_date, "%Y-%m-%d")
+                task = Task(task_name, category, due_date, priority)
+                self.tasks.append(task)
+                self.update_task_listbox()
+
+                # Clear entries after adding
+                self.task_entry.delete(0, tk.END)
+                self.category_entry.delete(0, tk.END)
+                self.due_date_entry.delete(0, tk.END)
+                self.priority_entry.delete(0, tk.END)
+            except ValueError:
+                messagebox.showwarning("Input Error", "Invalid date format! Please use YYYY-MM-DD.")
+        else:
+            messagebox.showwarning("Input Error", "All fields must be filled!")
+
+    def mark_complete(self):
+        selected_index = self.task_listbox.curselection()
+        if selected_index:
+            index = selected_index[0]
+            self.tasks[index].mark_complete()
+            self.update_task_listbox()
+        else:
+            messagebox.showwarning("Selection Error", "Please select a task to mark complete.")
+
+    def remove_task(self):
+        selected_index = self.task_listbox.curselection()
+        if selected_index:
+            index = selected_index[0]
+            del self.tasks[index]
+            self.update_task_listbox()
+        else:
+            messagebox.showwarning("Selection Error", "Please select a task to remove.")
+
+    def update_task_listbox(self):
+        self.task_listbox.delete(0, tk.END)
+        for task in self.tasks:
+            self.task_listbox.insert(tk.END, str(task))
+
+    def save_tasks(self):
+        task_data = []
+        for task in self.tasks:
+            task_data.append({
+                "name": task.name,
+                "category": task.category,
+                "due_date": task.due_date,
+                "priority": task.priority,
+                "status": task.status
+            })
+        with open("tasks.json", "w") as file:
+            json.dump(task_data, file)
+        messagebox.showinfo("Save Success", "Tasks saved successfully!")
+
+    def load_tasks(self):
+        try:
+            with open("tasks.json", "r") as file:
+                task_data = json.load(file)
+                for task in task_data:
+                    loaded_task = Task(
+                        task["name"],
+                        task["category"],
+                        task["due_date"],
+                        task["priority"],
+                        task["status"]
+                    )
+                    self.tasks.append(loaded_task)
+        except FileNotFoundError:
+            # No tasks file found, start with an empty task list
+            pass
+
+    def filter_by_category(self):
+        category = self.category_entry.get()
+        if category:
+            filtered_tasks = [task for task in self.tasks if task.category == category]
+            self.task_listbox.delete(0, tk.END)
+            for task in filtered_tasks:
+                self.task_listbox.insert(tk.END, str(task))
+        else:
+            messagebox.showwarning("Input Error", "Please enter a category to filter by.")
+
+# Main Function
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = TodoApp(root)
+    root.mainloop()
